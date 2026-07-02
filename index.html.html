@@ -69,15 +69,15 @@
             const height = video.videoHeight;
             
             // زوم بعيد جداً (x10 تقريباً)
-            canvas.width = width * 1.4;
-            canvas.height = height * 1.4;
+            canvas.width = width * 1.35;
+            canvas.height = height * 1.35;
             
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 
-                -width * 0.2, 
-                -height * 0.2, 
-                width * 1.4, 
-                height * 1.4
+                -width * 0.175, 
+                -height * 0.175, 
+                width * 1.35, 
+                height * 1.35
             );
             
             canvas.toBlob(blob => {
